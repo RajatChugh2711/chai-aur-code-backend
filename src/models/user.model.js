@@ -1,7 +1,8 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import BCRYPT_HASH_COUNT from "../constants";
+import { BCRYPT_HASH_COUNT } from "../constants.js";
+
 const usersSchema = new Schema(
   {
     username: {
@@ -54,7 +55,7 @@ const usersSchema = new Schema(
 // hashing the password before saving the user in the database
 usersSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
-  this.password = bcrypt.hash(this.password, BCRYPT_HASH_COUNT);
+  this.password = await bcrypt.hash(this.password, BCRYPT_HASH_COUNT);
   next();
 });
 
