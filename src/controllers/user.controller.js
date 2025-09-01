@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { generateAccessAndRefreshToken } from "../utils/generateToken.js";
+import jwt from 'jsonwebtoken';
 
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -134,4 +135,40 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 })
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.headers.accessToken || req.body.accessToken;
+  
+  // if not refresh token
+  if(!incomingRefreshToken) {
+    throw new ApiError(401, 'Unauthorized Token')
+  }
+
+  jwt.verify(incomingRefreshToken, process.env.JWT_REFRESH_SECRET_KEY, async (err, decoded) => {
+    if(err) {
+      throw new ApiError(403, 'Forbidden Token')
+    }
+
+    const user = await User.findById(decoded._id)
+
+    if(!user || user?.refreshToken !== incomingRefreshToken) {
+      throw new ApiError(403, 'Forbidden Token')
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user?._id);
+
+    // send access and refresh token to the cookie
+    const options = {
+      httpOnly: true,
+      secure: true
+    }
+    return res.status(200).cookie('accessToken', accessToken, options).cookie('refreshToken', refreshToken, options)
+      .json(new ApiResponse(200, {
+        accessToken,
+        refreshToken
+      },
+        "Access token generated successfully"
+      ))
+  })
+
+})
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
