@@ -251,7 +251,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, user, "User cover image updated successfully"));
 });
 
-export const getUserChannelProfile = asyncHandler(async (req, res) => {
+const getUserChannelProfile = asyncHandler(async (req, res) => {
   const {username} = req.params;
 
   if(!username) {
@@ -310,7 +310,7 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
   return res.json(new ApiResponse(200, channel[0], "Channel fetched successfully"));
 })
 
-export const getWatchHistory = asyncHandler(async (req, res) => {
+const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: { _id: new mongoose.Types.ObjectId(req.user?._id) }
